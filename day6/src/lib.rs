@@ -3,58 +3,47 @@ const INPUT: &str = include_str!("../input");
 
 pub fn pt1(input: &str) -> f64 {
     let mut input_iter = input.lines();
-    let mut bleh = input_iter.next().unwrap().split_whitespace();
+    let mut t = input_iter.next().unwrap().split_whitespace();
 
     // discard the "Time:" part
-    bleh.next();
+    t.next();
 
-    let time_iter = bleh.map(|x| str::parse::<f64>(x).unwrap());
+    let time_iter = t.map(|x| str::parse::<f64>(x).unwrap());
 
-    let mut ooooh = input_iter.next().unwrap().split_whitespace();
+    let mut d = input_iter.next().unwrap().split_whitespace();
 
     // dicard the "Distance:" part
-    ooooh.next();
+    d.next();
 
-    let distance_iter = ooooh.map(|x| str::parse::<f64>(x).unwrap());
+    let distance_iter = d.map(|x| str::parse::<f64>(x).unwrap());
 
     let product_of_ways_to_win = time_iter
         .zip(distance_iter)
-        .map(|(time, record)| {
-            let (lower, upper) = button_hold_time(time, record);
-
-            // Handle cases where a is greater than b or they are equal
-            if lower >= upper {
-                return 0_f64;
-            }
-
-            let lower_ceil = lower.ceil();
-
-            let lower_bound = if lower_ceil == lower {
-                lower_ceil + 1_f64
-            } else {
-                lower_ceil
-            };
-
-            let upper_floor = upper.floor();
-
-            let upper_bound = if upper_floor == upper {
-                upper - 1_f64
-            } else {
-                upper_floor
-            };
-
-            let ways_to_win = upper_bound - lower_bound + 1_f64;
-
-            println!(
-                "lower: {:?}, upper: {:?}, ways: {:?}",
-                lower, upper, ways_to_win
-            );
-
-            ways_to_win
-        })
+        .map(|(time, record)| ways_to_win(time, record))
         .product();
 
     return product_of_ways_to_win;
+}
+
+pub fn pt2(input: &str) -> f64 {
+    let mut input_iter = input.lines();
+    let mut t = input_iter.next().unwrap().split_whitespace();
+
+    // discard the "Time:" part
+    t.next();
+
+    let vs: Vec<&str> = t.collect();
+
+    let time = str::parse::<f64>(&vs.join("")).unwrap();
+
+    let mut d = input_iter.next().unwrap().split_whitespace();
+
+    // dicard the "Distance:" part
+    d.next();
+
+    let distance = str::parse::<f64>(&d.collect::<Vec<&str>>().join("")).unwrap();
+
+    ways_to_win(time, distance)
 }
 
 // let T be the time spent holding the button.
@@ -82,7 +71,7 @@ fn maximum(race_length: f64) -> (f64, f64) {
 }
 
 // takes a race length and the record and returns the button hold time used to achieve the record
-fn button_hold_time(race_length: f64, record: f64) -> (f64, f64) {
+fn ways_to_win(race_length: f64, record: f64) -> f64 {
     // use the quadratic formula to obtain the different button hold times
     // a = -1
     // b = L
@@ -99,10 +88,25 @@ fn button_hold_time(race_length: f64, record: f64) -> (f64, f64) {
     let v2 = (-b + sqrt) / (2_f64 * a);
 
     let min = v1.min(v2);
-    let other = if v1.min(v2) == v1 { v2 } else { v1 };
+    let max = if v1.min(v2) == v1 { v2 } else { v1 };
 
-    (min, other)
-    // the number of ways to win is the whole numbers between the two hold times obtained
+    let mut min_ceil = min.ceil();
+
+    min_ceil = if min_ceil == min {
+        min_ceil + 1_f64
+    } else {
+        min_ceil
+    };
+
+    let mut max_floor = max.floor();
+
+    max_floor = if max_floor == max {
+        max_floor - 1_f64
+    } else {
+        max_floor
+    };
+
+    max_floor - min_ceil + 1_f64
 }
 
 #[cfg(test)]
@@ -113,8 +117,13 @@ mod tests {
     fn pt1_works() {
         assert_eq!(288_f64, pt1(TEST_INPUT));
         assert_eq!(1083852_f64, pt1(INPUT));
-        // let result = add(2, 2);
-        // assert_eq!(result, 4);
+    }
+
+    #[test]
+    fn pt2_works() {
+        use super::*;
+        assert_eq!(71503_f64, pt2(TEST_INPUT));
+        assert_eq!(23501589_f64, pt2(INPUT));
     }
 }
 
